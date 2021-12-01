@@ -12,10 +12,11 @@ Installation
 Clone this repository to a temporary directory using `GIT <https://git-scm.com/>`_ (or alternatively
 download as `.zip <https://github.com/lliendo/SimplePipeline/archive/master.zip>`_), and run:
 
-.. code-block:: bash
-    git clone https://github.com/lliendo/SimplePipeline.git
-    cd SimplePipeline
-    python setup.py install
+```bash
+git clone https://github.com/lliendo/SimplePipeline.git
+cd SimplePipeline
+python setup.py install
+```
 
 
 Documentation
@@ -30,12 +31,13 @@ category a processor class falls automatically.
 Once you designed all your processor classes just configure and run an instance of `Pipeline`.
 For example:
 
-.. code-block:: python
-    Pipeline([
-        {'processor': Producer},
-        {'processor': Multiplier, 'total': 4},  # consumer/producer.
-        {'processor': Consumer, 'total': 4},
-    ]).run()
+```python
+Pipeline([
+    {'processor': Producer},
+    {'processor': Multiplier, 'total': 4},  # consumer/producer.
+    {'processor': Consumer, 'total': 4},
+]).run()
+```
 
 
 The above snippet creates a pipeline that consists of a single producer (the `Producer` class),
@@ -51,15 +53,16 @@ argument is not supplied then the total number of processes for that stage will 
 Optionally the `args` and `kwargs` keys can be supplied to pass down arbitrary arguments and keyword
 arguments to each processor. For example:
 
-.. code-block:: python
-    Pipeline([
-        {
-            'processor': Producer,
-            'args': (1, 2, ...),
-            'kwargs': {'kwarg': 'A', ...}
-        },
-        ...
-    ]).run()
+```python
+Pipeline([
+    {
+        'processor': Producer,
+        'args': (1, 2, ...),
+        'kwargs': {'kwarg': 'A', ...}
+    },
+    ...
+]).run()
+```
 
 
 Then any `Producer` method can access these attributes through `self.args` and `self.kwargs`.
@@ -67,50 +70,51 @@ The final `run()` call on the `Pipeline` instance triggers the pipeline.
 
 Here are the classes used for the pipeline described above:
 
-.. code-block:: python
-    import os
+```python
+import os
 
-    from simple_pipeline import Processor, Pipeline
-
-
-    class Producer(Processor):
-        def on_start(self):
-            print(f'Producer PID: {os.getpid()} starting.')
-            self.total_processed = 0
-
-        def process(self, item=None):
-            for n in range(100000):
-                self.total_processed += 1
-                yield n
-
-        def on_exit(self):
-            print(f'Producer PID: {os.getpid()} finishing. Total produced: {self.total_processed}.')
+from simple_pipeline import Processor, Pipeline
 
 
-    class Multiplier(Processor):
-        def on_start(self):
-            print(f'Multiplier PID: {os.getpid()} starting.')
-            self.total_processed = 0
+class Producer(Processor):
+    def on_start(self):
+        print(f'Producer PID: {os.getpid()} starting.')
+        self.total_processed = 0
 
-        def process(self, item=None):
+    def process(self, item=None):
+        for n in range(100000):
             self.total_processed += 1
-            output_value = item * 2
-            return output_value
+            yield n
 
-        def on_exit(self):
-            print(f'Multiplier PID: {os.getpid()} finishing. Total multiplied: {self.total_processed}.')
+    def on_exit(self):
+        print(f'Producer PID: {os.getpid()} finishing. Total produced: {self.total_processed}.')
 
 
-    class Consumer(Processor):
-        def on_start(self):
-            print(f'Consumer PID: {os.getpid()} starting.')
-            self.total_processed = 0
+class Multiplier(Processor):
+    def on_start(self):
+        print(f'Multiplier PID: {os.getpid()} starting.')
+        self.total_processed = 0
 
-        def process(self, item=None):
-            self.total_processed += 1
+    def process(self, item=None):
+        self.total_processed += 1
+        output_value = item * 2
+        return output_value
 
-        def on_exit(self):
-            print(f'Consumer PID: {os.getpid()} finishing. Total consumed: {self.total_processed}.')
+    def on_exit(self):
+        print(f'Multiplier PID: {os.getpid()} finishing. Total multiplied: {self.total_processed}.')
+
+
+class Consumer(Processor):
+    def on_start(self):
+        print(f'Consumer PID: {os.getpid()} starting.')
+        self.total_processed = 0
+
+    def process(self, item=None):
+        self.total_processed += 1
+
+    def on_exit(self):
+        print(f'Consumer PID: {os.getpid()} finishing. Total consumed: {self.total_processed}.')
+```
 
 
 Each `Processor` class must implement the `process` method and might optionally implement the
@@ -131,20 +135,22 @@ stage it will be put in an error queue. By default `Pipeline` outputs all errors
 need to customize error handling you need to inherit from the `ErrorWatcher` class and at least implement
 its `process` method. For example:
 
-.. code-block:: python
-    class CustomErrorWatcher(ErrorWatcher):
-        def process(self, error):
-            ...
+```python
+class CustomErrorWatcher(ErrorWatcher):
+    def process(self, error):
+        ...
+```
 
 
 where `error` is an exception that was raised somewhere in the pipeline. In order to complete this
 custom error handling you need to supply this class to the `Pipeline` constructor through the
 `error_watcher` keyword argument:
 
-.. code-block:: python
-    Pipeline([
-        ...
-    ], error_watcher=CustomErrorWatcher).run()
+```python
+Pipeline([
+    ...
+], error_watcher=CustomErrorWatcher).run()
+```
 
 
 Licence
