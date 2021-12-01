@@ -39,7 +39,6 @@ Pipeline([
 ]).run()
 ```
 
-
 The above snippet creates a pipeline that consists of a single producer (the `Producer` class),
 four consumer/producers (the `Multiplier` class) and finally four consumers (the `Consumer` class).
 
@@ -64,30 +63,43 @@ Pipeline([
 ]).run()
 ```
 
-
 Then any `Producer` method can access these attributes through `self.args` and `self.kwargs`.
 The final `run()` call on the `Pipeline` instance triggers the pipeline.
 
-Here are the classes used for the pipeline described above:
+Here is a complete example:
 
 ```python
+"""
+The following dummy example shows how a pipeline should be setup.
+Some random failures are intentionally added to the `Multiplier` and `Consumer`
+classes to demonstrate how exceptions are caught and sent to the error queue.
+"""
+
 import os
+import random
 
 from simple_pipeline import Processor, Pipeline
 
 
 class Producer(Processor):
+
+    TOTAL_ITEMS = 1000
+
     def on_start(self):
         print(f'Producer PID: {os.getpid()} starting.')
         self.total_processed = 0
 
     def process(self, item=None):
-        for n in range(100000):
+        for n in range(self.TOTAL_ITEMS):
             self.total_processed += 1
             yield n
 
     def on_exit(self):
         print(f'Producer PID: {os.getpid()} finishing. Total produced: {self.total_processed}.')
+
+
+class MultiplierError(Exception):
+    pass
 
 
 class Multiplier(Processor):
@@ -96,12 +108,20 @@ class Multiplier(Processor):
         self.total_processed = 0
 
     def process(self, item=None):
+        if random.random() <= 0.01:
+            raise MultiplierError('Multiplier exception raised.')
+
         self.total_processed += 1
         output_value = item * 2
+
         return output_value
 
     def on_exit(self):
         print(f'Multiplier PID: {os.getpid()} finishing. Total multiplied: {self.total_processed}.')
+
+
+class ConsumerError(Exception):
+    pass
 
 
 class Consumer(Processor):
@@ -110,18 +130,28 @@ class Consumer(Processor):
         self.total_processed = 0
 
     def process(self, item=None):
+        if random.random() <= 0.01:
+            raise ConsumerError('Consumer exception raised.')
+
         self.total_processed += 1
 
     def on_exit(self):
         print(f'Consumer PID: {os.getpid()} finishing. Total consumed: {self.total_processed}.')
-```
 
+
+if __name__ == '__main__':
+    Pipeline([
+        {'processor': Producer},
+        {'processor': Multiplier, 'total': 4},
+        {'processor': Consumer, 'total': 4},
+    ]).run()
+```
 
 Each `Processor` class must implement the `process` method and might optionally implement the
 `on_start` and `on_exit` methods to setup and tear down any resources required during the pipeline
 activity (these will be called just once).
 
-The above example sets up a `Producer` that generates 100000 numbers, a `Multiplier` class that simply
+The above example sets up a `Producer` that generates 1000 numbers, a `Multiplier` class that simply
 multiplies by two a number and finally a `Consumer` class that displays the total number of items
 processed.
 
@@ -140,7 +170,6 @@ class CustomErrorWatcher(ErrorWatcher):
     def process(self, error):
         ...
 ```
-
 
 where `error` is an exception that was raised somewhere in the pipeline. In order to complete this
 custom error handling you need to supply this class to the `Pipeline` constructor through the
