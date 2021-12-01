@@ -9,8 +9,8 @@ the multiprocessing power of your computer.
 Installation
 ------------
 
-Clone this repository to a temporary directory using `GIT <https://git-scm.com/>`_ (or alternatively
-download as `.zip <https://github.com/lliendo/SimplePipeline/archive/master.zip>`_), and run:
+Clone this repository to a temporary directory using [GIT](https://git-scm.com/) (or alternatively
+download as [.zip](https://github.com/lliendo/SimplePipeline/archive/master.zip) and run:
 
 ```bash
 git clone https://github.com/lliendo/SimplePipeline.git
@@ -156,7 +156,7 @@ Pipeline([
 Licence
 -------
 
-SimplePipeline is distributed under the `GNU LGPLv3 <https://www.gnu.org/licenses/lgpl.txt>`_ license.
+SimplePipeline is distributed under the [GNU LGPLv3](https://www.gnu.org/licenses/lgpl.txt) license.
 
 
 Authors
