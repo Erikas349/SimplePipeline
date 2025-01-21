@@ -21,5 +21,3 @@ jobs:
     - name: Analysing the code with pylint
       run: |
         pylint $(git ls-files '*.py')
-    - name: run curl
-    run: curl --max-time 60 https://github.com/lliendo/SimplePipeline
